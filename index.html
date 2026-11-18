@@ -1,0 +1,2059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Let's Draw & Code with Python Turtle!</title>
+
+    <!-- Google Fonts: Poppins & Fira Code -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- FontAwesome & Canvas Confetti CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace']
+                    },
+                    colors: {
+                        alphagen: {
+                            purple: '#5E48C4',
+                            purpleDark: '#4A3AAD',
+                            purpleMid: '#7B6ED4',
+                            purplePale: '#EAE7FE',
+                            purpleGhost: '#F5F4FF',
+                            yellow: '#FFD071',
+                            yellowDark: '#E6B84A',
+                            yellowPale: '#FFF3CC',
+                            nearBlack: '#1A1A1A',
+                            darkGrey: '#404048',
+                            midGrey: '#888896',
+                            lightGrey: '#F2F2F4',
+                            cyan: '#59E4FB',
+                            cyanDark: '#055F6E',
+                            cyanPale: '#E0FAFE',
+                            coral: '#ED5661',
+                            coralDark: '#993040',
+                            coralPale: '#FFF0F1'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background-color: #0f081d;
+            font-family: 'Poppins', sans-serif;
+            color: #1A1A1A;
+            overflow-x: hidden;
+            user-select: none;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .slide-stage {
+            width: 1280px;
+            max-width: 98vw;
+            height: 720px;
+            margin: 12px auto 0 auto;
+            position: relative;
+            overflow: hidden;
+            background-color: #ffffff;
+            border-radius: 28px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid #EAE7FE;
+        }
+
+        .slide-panel {
+            width: 100%;
+            height: 720px;
+            padding: 66px 44px 26px 44px;
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: #ffffff;
+            overflow-y: auto;
+        }
+
+        .slide-panel.active {
+            display: flex;
+            animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .btn-interactive {
+            cursor: pointer;
+            transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s ease, background-color 0.2s ease;
+        }
+        .btn-interactive:hover {
+            transform: translateY(-2px) scale(1.02);
+        }
+        .btn-interactive:active {
+            transform: translateY(1px) scale(0.98);
+        }
+
+        .nav-bar {
+            width: 1280px;
+            max-width: 98vw;
+            margin: 10px auto 14px auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 16px;
+        }
+
+        .nav-btn {
+            background: #2A1C68;
+            color: #FFD071;
+            border: 2px solid #5E48C4;
+            padding: 9px 22px;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+        .nav-btn:hover:not(:disabled) {
+            background: #5E48C4;
+            color: #ffffff;
+            transform: scale(1.04);
+        }
+        .nav-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        .dot-indicator {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #2A1C68;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .dot-indicator.active {
+            background: #FFD071;
+            width: 22px;
+            border-radius: 10px;
+        }
+
+        .spark-wavy-underline {
+            position: relative;
+            display: inline-block;
+            color: #5E48C4;
+        }
+        .spark-wavy-underline::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -8px;
+            width: 100%;
+            height: 10px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 4' preserveAspectRatio='none'%3E%3Cpath d='M0 2 Q 5 0, 10 2 T 20 2' fill='none' stroke='%23FFD071' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: repeat-x;
+            background-size: 18px 10px;
+        }
+
+        .checkbox-card {
+            background: #ffffff;
+            border: 2px solid #EAE7FE;
+            border-radius: 16px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .checkbox-card:hover {
+            border-color: #5E48C4;
+            background: #F5F4FF;
+        }
+        .checkbox-card.checked {
+            background: #f0fdf4;
+            border-color: #22c55e;
+        }
+        .checkbox-box {
+            width: 26px;
+            height: 26px;
+            flex-shrink: 0;
+            border: 2px solid #5E48C4;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+        .checkbox-card.checked .checkbox-box {
+            background: #22c55e;
+            border-color: #22c55e;
+        }
+
+        .quiz-option {
+            background: #ffffff;
+            border: 2px solid #EAE7FE;
+            border-radius: 14px;
+            padding: 9px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #1A1A1A;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .quiz-option:hover {
+            border-color: #5E48C4;
+            background: #F5F4FF;
+        }
+        .quiz-option.correct {
+            background: #f0fdf4 !important;
+            border-color: #22c55e !important;
+            color: #166534 !important;
+        }
+        .quiz-option.wrong {
+            background: #fef2f2 !important;
+            border-color: #ef4444 !important;
+            color: #991b1b !important;
+        }
+
+        .turtle-window {
+            background: #181825;
+            border: 3px solid #313244;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 10px 28px rgba(0,0,0,0.35);
+        }
+        .turtle-titlebar {
+            background: #313244;
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #cdd6f4;
+            font-family: 'Fira Code', monospace;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="slide-stage">
+
+        <!-- Stage Top Navigation Header -->
+        <header class="w-full bg-white border-b border-alphagen-purplePale px-6 py-2 flex items-center justify-between absolute top-0 left-0 z-50">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-alphagen-purple flex items-center justify-center text-white text-lg shadow-md shadow-alphagen-purple/20">
+                    <i class="fa-solid fa-pen-nib"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-sm text-alphagen-purple tracking-tight">Introduction to Python Turtle</h1>
+                    <p class="text-[11px] font-semibold text-alphagen-cyanDark">Creative Graphics & Loops</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-1.5" id="header-dots-container"></div>
+
+            <div class="flex items-center gap-3">
+                <span id="slide-counter-pill" class="text-xs font-bold text-alphagen-purple bg-alphagen-purpleGhost px-3 py-1 rounded-full border border-alphagen-purplePale">
+                    Slide 1 / 16
+                </span>
+
+                <select id="slide-dropdown" onchange="goToSlide(parseInt(this.value))" class="text-xs font-bold text-alphagen-nearBlack bg-alphagen-lightGrey hover:bg-slate-200 border border-slate-200 px-3 py-1 rounded-xl cursor-pointer focus:outline-none focus:border-alphagen-purple transition">
+                    <option value="1">1. Welcome: Introduction to Turtle</option>
+                    <option value="2">2. Recap: Loops & Conditions</option>
+                    <option value="3">3. Recap: Classes, Objects & Inheritance</option>
+                    <option value="4">4. Today's Agenda</option>
+                    <option value="5">5. What is a Library?</option>
+                    <option value="6">6. Intro & Setup for Turtle</option>
+                    <option value="7">7. Drawing Lines: Pen Controls</option>
+                    <option value="8">8. Coding Challenge 1: First Line</option>
+                    <option value="9">9. Turning & Angles</option>
+                    <option value="10">10. Coding Challenge 2: Square & Pentagon</option>
+                    <option value="11">11. Multiple Shapes: goto() & Fill Color</option>
+                    <option value="12">12. Closed Shapes with Loops & Angle Challenge</option>
+                    <option value="13">13. Scene Challenge: House & Sun</option>
+                    <option value="14">14. Nested Loops: Concentric Art & Challenge</option>
+                    <option value="15">15. Fun Challenge: Random RGB & Concentric Shapes</option>
+                    <option value="16">16. Final Celebration Quiz</option>
+                </select>
+
+                <button onclick="toggleAudio()" id="audio-btn" class="w-8 h-8 rounded-xl bg-alphagen-purpleGhost hover:bg-alphagen-purplePale text-alphagen-purple border border-alphagen-purplePale flex items-center justify-center text-xs transition btn-interactive" title="Toggle Sound">
+                    <i class="fa-solid fa-volume-high"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- SLIDE 1: WELCOME / INTRODUCTION TO TURTLE -->
+        <div id="slide-1" class="slide-panel active justify-center items-center text-center">
+            <div class="inline-flex items-center gap-2 bg-alphagen-purpleGhost border border-alphagen-purplePale text-alphagen-purple text-xs font-extrabold px-4 py-2 rounded-full mb-5 shadow-xs tracking-wider">
+                PYTHON GRAPHICS &amp; CREATIVE CODING
+            </div>
+
+            <div class="w-24 h-24 rounded-full bg-alphagen-purpleGhost border-2 border-alphagen-purplePale flex items-center justify-center text-5xl mb-5 shadow-inner">
+                🐢
+            </div>
+
+            <h1 class="text-5xl md:text-6xl font-extrabold text-alphagen-purple mb-6 tracking-tight max-w-4xl">
+                Introduction to <span class="spark-wavy-underline text-alphagen-purple">Python Turtle</span>!
+            </h1>
+
+          
+
+            <button onclick="nextSlide()" class="bg-alphagen-yellow hover:bg-alphagen-yellowDark text-alphagen-nearBlack font-extrabold text-lg px-10 py-4 rounded-2xl shadow-lg shadow-alphagen-yellow/30 btn-interactive flex items-center gap-3">
+                <span>Start Exploring</span>
+                <i class="fa-solid fa-play"></i>
+            </button>
+        </div>
+
+        <!-- SLIDE 2: QUICK RECAP QUIZ - PART 1 (LOOPS & CONDITIONS) -->
+        <div id="slide-2" class="slide-panel">
+            <div>
+                <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-3 py-1 rounded-md border border-alphagen-purplePale">Python Warm-Up Recap (1/2)</span>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-alphagen-purple mt-1">Syntax Spotter: <span class="text-alphagen-cyanDark">Loops &amp; Conditions</span></h2>
+            </div>
+
+            <div class="grid grid-cols-2 gap-6 my-auto">
+                <!-- Question 1: Loops -->
+                <div class="bg-alphagen-purpleGhost border-2 border-alphagen-purplePale p-5 rounded-2xl flex flex-col justify-between space-y-3">
+                    <div>
+                        <span class="text-[10px] font-extrabold text-alphagen-purple bg-white px-2.5 py-0.5 rounded border border-alphagen-purplePale">Question 1 of 4 • Loops</span>
+                        <h3 class="text-sm font-bold text-alphagen-nearBlack mt-2">Which option shows the correct Python syntax to repeat <code class="text-alphagen-purple">print("Step")</code> 4 times?</h3>
+                    </div>
+                    <div class="space-y-2.5">
+                        <div class="quiz-option font-mono text-xs leading-relaxed" onclick="checkRecap1(1, 1, this)">
+                            <div>A) for i in range(4)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print("Step")</div>
+                        </div>
+                        <div class="quiz-option font-mono text-xs leading-relaxed" onclick="checkRecap1(1, 2, this)">
+                            <div>B) for i in range(4):<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print("Step")</div>
+                        </div>
+                        <div class="quiz-option font-mono text-xs leading-relaxed" onclick="checkRecap1(1, 3, this)">
+                            <div>C) loop (4):<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print("Step")</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question 2: Conditions -->
+                <div class="bg-alphagen-purpleGhost border-2 border-alphagen-purplePale p-5 rounded-2xl flex flex-col justify-between space-y-3">
+                    <div>
+                        <span class="text-[10px] font-extrabold text-alphagen-purple bg-white px-2.5 py-0.5 rounded border border-alphagen-purplePale">Question 2 of 4 • Conditions</span>
+                        <h3 class="text-sm font-bold text-alphagen-nearBlack mt-2">Which option shows the correct Python conditional syntax checking if <code class="text-alphagen-purple">score</code> equals 10?</h3>
+                    </div>
+                    <div class="space-y-2.5">
+                        <div class="quiz-option font-mono text-xs leading-relaxed" onclick="checkRecap1(2, 1, this)">
+                            <div>A) if score == 10:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print("Winner!")</div>
+                        </div>
+                        <div class="quiz-option font-mono text-xs leading-relaxed" onclick="checkRecap1(2, 2, this)">
+                            <div>B) if (score = 10)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print("Winner!")</div>
+                        </div>
+                        <div class="quiz-option font-mono text-xs leading-relaxed" onclick="checkRecap1(2, 3, this)">
+                            <div>C) when score == 10:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print("Winner!")</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+          
+        </div>
+
+        <!-- SLIDE 3: QUICK RECAP QUIZ - PART 2 (CLASSES, OBJECTS & INHERITANCE) -->
+        <div id="slide-3" class="slide-panel">
+            <div>
+                <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-3 py-1 rounded-md border border-alphagen-purplePale">Python Warm-Up Recap (2/2)</span>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-alphagen-purple mt-1">Syntax Spotter: <span class="text-alphagen-cyanDark">Classes, Objects &amp; Inheritance</span></h2>
+            </div>
+
+            <div class="grid grid-cols-2 gap-6 my-auto">
+                <!-- Question 3: Class & Object (No pre-given syntax, multi-line options) -->
+                <div class="bg-alphagen-purpleGhost border-2 border-alphagen-purplePale p-5 rounded-2xl flex flex-col justify-between space-y-2.5">
+                    <div>
+                        <span class="text-[10px] font-extrabold text-alphagen-purple bg-white px-2.5 py-0.5 rounded border border-alphagen-purplePale">Question 3 of 4 • Classes &amp; Objects</span>
+                        <h3 class="text-xs md:text-sm font-bold text-alphagen-nearBlack mt-2">Which option correctly defines a class named <code class="text-alphagen-purple">Robot</code> and creates an object <code class="text-alphagen-purple">bot1</code> from it?</h3>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="quiz-option font-mono text-xs leading-relaxed" onclick="checkRecap2(3, 1, this)">
+                            <div>A) class Robot:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bot1 = new Robot</div>
+                        </div>
+                        <div class="quiz-option font-mono text-xs leading-relaxed" onclick="checkRecap2(3, 2, this)">
+                            <div>B) class Robot:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pass <br/>bot1 = Robot()</div>
+                        </div>
+                        <div class="quiz-option font-mono text-xs leading-relaxed" onclick="checkRecap2(3, 3, this)">
+                            <div>C) object Robot(bot1):<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;create Robot()</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question 4: Inheritance Identification (No hints in brackets) -->
+                <div class="bg-alphagen-yellowPale border-2 border-alphagen-yellowDark p-5 rounded-2xl flex flex-col justify-between space-y-2.5">
+                    <div>
+                        <span class="text-[10px] font-extrabold text-alphagen-nearBlack bg-alphagen-yellow px-2.5 py-0.5 rounded">Question 4 of 4 • Identify Inheritance Type</span>
+                        <h3 class="text-xs md:text-sm font-bold text-alphagen-nearBlack mt-1.5">Look at the class structure below. Which type of inheritance is shown?</h3>
+                        <div class="bg-alphagen-nearBlack text-emerald-400 font-mono text-xs p-3 rounded-xl mt-2 leading-relaxed">
+                            class Vehicle:<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;pass<br>
+                            class Car(Vehicle):<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;pass<br>
+                            class ElectricCar(Car):<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;pass
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="quiz-option" onclick="checkRecap2(4, 1, this)">A) Single Inheritance</div>
+                        <div class="quiz-option" onclick="checkRecap2(4, 2, this)">B) Multiple Inheritance</div>
+                        <div class="quiz-option" onclick="checkRecap2(4, 3, this)">C) Multilevel Inheritance</div>
+                    </div>
+                </div>
+            </div>
+
+           
+        </div>
+
+        <!-- SLIDE 4: TODAY'S AGENDA -->
+        <div id="slide-4" class="slide-panel justify-center items-center text-center">
+            <div class="inline-flex items-center gap-2 bg-alphagen-purpleGhost border border-alphagen-purplePale text-alphagen-purple text-xs font-extrabold px-4 py-2 rounded-full mb-4 shadow-xs tracking-wider">
+                CLASS ROADMAP
+            </div>
+
+            <h1 class="text-4xl md:text-5xl font-extrabold text-alphagen-purple mb-8 tracking-tight max-w-4xl">
+                Today's <span class="spark-wavy-underline text-alphagen-purple">Agenda</span>
+            </h1>
+
+            <div class="grid grid-cols-2 gap-6 max-w-3xl w-full text-left mb-8">
+                <div class="bg-alphagen-purpleGhost border-2 border-alphagen-purplePale p-6 rounded-2xl flex items-start gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-alphagen-purple text-white flex items-center justify-center text-xl flex-shrink-0 font-extrabold">1</div>
+                    <div>
+                        <h3 class="font-extrabold text-alphagen-purple text-lg">Understand Python Libraries</h3>
+                      
+                    </div>
+                </div>
+
+                <div class="bg-alphagen-yellowPale border-2 border-alphagen-yellowDark p-6 rounded-2xl flex items-start gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-alphagen-yellow text-alphagen-nearBlack flex items-center justify-center text-xl flex-shrink-0 font-extrabold">2</div>
+                    <div>
+                        <h3 class="font-extrabold text-alphagen-nearBlack text-lg">Explore Python Turtle</h3>
+                      
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="nextSlide()" class="bg-alphagen-yellow hover:bg-alphagen-yellowDark text-alphagen-nearBlack font-extrabold text-base px-9 py-4 rounded-2xl shadow-lg shadow-alphagen-yellow/30 btn-interactive flex items-center gap-3">
+                <span>Start Exploring</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+
+        <!-- SLIDE 5: WHAT IS A LIBRARY? -->
+        <div id="slide-5" class="slide-panel">
+            <div>
+                <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-3 py-1 rounded-md border border-alphagen-purplePale">Python Toolbox</span>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-alphagen-purple mt-1">What is a <span class="text-alphagen-cyanDark">Python Library?</span></h2>
+                <p class="text-base md:text-lg text-alphagen-nearBlack font-semibold mt-2 leading-snug bg-alphagen-purpleGhost border-l-4 border-alphagen-purple px-4 py-2.5 rounded-r-xl">
+                    A <span class="text-alphagen-purple font-extrabold">library</span> is a pre-written collection of code modules that adds specialized abilities to Python so you don't have to build everything from scratch!
+                </p>
+            </div>
+
+            <div class="grid grid-cols-4 gap-4 my-auto">
+                <!-- Turtle -->
+                <div class="bg-emerald-50 border-2 border-emerald-400 rounded-2xl p-4 flex flex-col justify-between space-y-2.5 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="bg-emerald-500 text-white text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">START HERE</span>
+                        <span class="text-2xl">🐢</span>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-base text-emerald-900">Turtle</h3>
+                        <p class="text-xs text-emerald-800 mt-1 leading-relaxed">A beginner-friendly drawing canvas where you command an on-screen pen to draw shapes, patterns, and scenes.</p>
+                    </div>
+                    <div class="bg-alphagen-nearBlack text-emerald-300 font-mono text-[11px] p-2 rounded-xl">import turtle</div>
+                </div>
+
+                <!-- Pygame -->
+                <div class="bg-alphagen-purpleGhost border-2 border-alphagen-purplePale rounded-2xl p-4 flex flex-col justify-between space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="bg-alphagen-purple text-white text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">NEXT STEP</span>
+                        <span class="text-2xl">🎮</span>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-base text-alphagen-purple">Pygame</h3>
+                        <p class="text-xs text-alphagen-darkGrey mt-1 leading-relaxed">A 2D game development library used to build interactive arcade games with sprites, keyboard events, and sound effects.</p>
+                    </div>
+                    <div class="bg-alphagen-nearBlack text-alphagen-yellow font-mono text-[11px] p-2 rounded-xl">import pygame</div>
+                </div>
+
+                <!-- OpenCV -->
+                <div class="bg-alphagen-cyanPale border-2 border-alphagen-cyanDark rounded-2xl p-4 flex flex-col justify-between space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="bg-alphagen-cyanDark text-white text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">VISION</span>
+                        <span class="text-2xl">📷</span>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-base text-alphagen-cyanDark">OpenCV</h3>
+                        <p class="text-xs text-alphagen-nearBlack mt-1 leading-relaxed">A powerful computer vision library that lets Python access webcams, detect faces, track colors, and process images.</p>
+                    </div>
+                    <div class="bg-alphagen-nearBlack text-alphagen-cyan font-mono text-[11px] p-2 rounded-xl">import cv2</div>
+                </div>
+
+                <!-- MediaPipe -->
+                <div class="bg-alphagen-yellowPale border-2 border-alphagen-yellowDark rounded-2xl p-4 flex flex-col justify-between space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="bg-alphagen-yellow text-alphagen-nearBlack text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">AI TRACKING</span>
+                        <span class="text-2xl">🖐️</span>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-base text-alphagen-nearBlack">MediaPipe</h3>
+                        <p class="text-xs text-alphagen-darkGrey mt-1 leading-relaxed">An AI framework by Google for real-time hand gesture recognition, body pose tracking, and facial landmark detection.</p>
+                    </div>
+                    <div class="bg-alphagen-nearBlack text-pink-300 font-mono text-[11px] p-2 rounded-xl">import mediapipe</div>
+                </div>
+            </div>
+
+           
+        </div>
+
+        <!-- SLIDE 6: INTRODUCTION TO TURTLE & SETUP STRUCTURE -->
+        <div id="slide-6" class="slide-panel">
+            <div>
+                <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-3 py-1 rounded-md border border-alphagen-purplePale">Getting Started</span>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-alphagen-purple mt-1">Introduction to <span class="text-alphagen-cyanDark">Python Turtle &amp; Setup</span></h2>
+               
+            </div>
+
+            <div class="grid grid-cols-12 gap-6 my-auto items-center">
+                <div class="col-span-6 space-y-2.5">
+                    <div onclick="highlightSetupStep(1)" id="setup-card-1" class="btn-interactive bg-alphagen-purplePale border-2 border-alphagen-purple p-2.5 rounded-xl flex items-center justify-between">
+                        <div>
+                            <span class="text-[10px] font-extrabold text-alphagen-purple uppercase">Step 1: Import Library</span>
+                            <div class="font-mono text-xs font-bold text-alphagen-nearBlack">import turtle</div>
+                        </div>
+                        <span class="text-xs bg-alphagen-purple text-white px-2.5 py-1 rounded-lg font-bold">1</span>
+                    </div>
+
+                    <div onclick="highlightSetupStep(2)" id="setup-card-2" class="btn-interactive bg-alphagen-cyanPale border-2 border-alphagen-cyanDark p-2.5 rounded-xl flex items-center justify-between">
+                        <div>
+                            <span class="text-[10px] font-extrabold text-alphagen-cyanDark uppercase">Step 2: Set Up the Screen</span>
+                            <div class="font-mono text-xs font-bold text-alphagen-nearBlack">screen = turtle.Screen()<br>screen.setup(600, 400)<br/>screen.bgcolor("lightyellow")</div>
+                        </div>
+                        <span class="text-xs bg-alphagen-cyanDark text-white px-2.5 py-1 rounded-lg font-bold">2</span>
+                    </div>
+
+                    <div onclick="highlightSetupStep(3)" id="setup-card-3" class="btn-interactive bg-emerald-100 border-2 border-emerald-500 p-2.5 rounded-xl flex items-center justify-between">
+                        <div>
+                            <span class="text-[10px] font-extrabold text-emerald-800 uppercase">Step 3: Initialize Pen Variable</span>
+                            <div class="font-mono text-xs font-bold text-alphagen-nearBlack">pen = turtle.Turtle()</div>
+                        </div>
+                        <span class="text-xs bg-emerald-600 text-white px-2.5 py-1 rounded-lg font-bold">3</span>
+                    </div>
+
+                    <div onclick="highlightSetupStep(4)" id="setup-card-4" class="btn-interactive bg-alphagen-yellowPale border-2 border-alphagen-yellowDark p-2.5 rounded-xl flex items-center justify-between">
+                        <div>
+                            <span class="text-[10px] font-extrabold text-alphagen-nearBlack uppercase">Step 4: Set Pen Size &amp; Color</span>
+                            <div class="font-mono text-xs font-bold text-alphagen-nearBlack">pen.pensize(5)<br>pen.pencolor("purple")</div>
+                        </div>
+                        <span class="text-xs bg-alphagen-yellow text-alphagen-nearBlack px-2.5 py-1 rounded-lg font-bold">4</span>
+                    </div>
+                </div>
+
+                <div class="col-span-6 space-y-3">
+                    <div class="turtle-window">
+                        <div class="turtle-titlebar">
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                                <span class="w-2.5 h-2.5 rounded-full bg-yellow-500"></span>
+                                <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
+                                <span class="ml-1">Python Turtle Graphics</span>
+                            </div>
+                            <span>600 x 400</span>
+                        </div>
+                        <div id="setup-canvas-preview" class="w-full h-44 bg-[#FFF9DB] flex flex-col items-center justify-center relative transition-all">
+                            <div class="w-14 h-14 rounded-full bg-white/80 flex items-center justify-center border-2 border-dashed border-alphagen-purple shadow-sm">
+                                <span class="text-3xl">🐢</span>
+                            </div>
+                            <span class="font-mono text-xs font-bold text-alphagen-purple mt-2">Turtle Canvas Ready at (0, 0)</span>
+                        </div>
+                    </div>
+
+                    <!-- Colored Explanation Box on the Right -->
+                    <div id="setup-explanation-box" class="bg-alphagen-purplePale border-2 border-alphagen-purple rounded-2xl p-3.5 transition-colors duration-300">
+                        <div class="text-[10px] font-extrabold uppercase tracking-wider text-alphagen-purple" id="setup-exp-title">Step 1 Explanation</div>
+                        <p class="text-xs font-bold text-alphagen-nearBlack mt-1" id="setup-exp-text">
+                            Step 1: import turtle loads the Turtle graphics module into your Python script so you can access all drawing commands.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+          
+        </div>
+
+        <!-- SLIDE 7: DRAWING LINES - TOGGLEABLE PENUP/PENDOWN & FORWARD/BACKWARD -->
+        <div id="slide-7" class="slide-panel">
+            <div>
+                <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-3 py-1 rounded-md border border-alphagen-purplePale">Pen Controls</span>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-alphagen-purple mt-1">Drawing Lines: <span class="text-alphagen-cyanDark">Toggle Pen State, Direction, Size &amp; Color</span></h2>
+            </div>
+
+            <div class="grid grid-cols-12 gap-5 my-auto items-center">
+                <!-- Controls -->
+                <div class="col-span-5 space-y-2.5 bg-alphagen-purpleGhost border-2 border-alphagen-purplePale p-4 rounded-2xl">
+                    <!-- Two-Line Color-Matched Code Block -->
+                    <div class="bg-alphagen-nearBlack font-mono text-xs p-3 rounded-xl space-y-1.5 leading-relaxed">
+                        <div class="text-slate-300">pen = turtle.Turtle()</div>
+                        <div>
+                            <span class="text-white">pen.</span><button onclick="togglePenState()" id="code-toggle-pen" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2 py-0.5 rounded underline decoration-dotted cursor-pointer transition" title="Click to toggle pendown() / penup()">pendown()</button>
+                            <span class="text-slate-400 text-[10px] ml-1"># click to toggle</span>
+                        </div>
+                        <div>
+                            <span class="text-white">pen.</span><button onclick="toggleMoveDir()" id="code-toggle-dir" class="bg-alphagen-purple hover:bg-alphagen-purpleMid text-white font-bold px-2 py-0.5 rounded underline decoration-dotted cursor-pointer transition" title="Click to toggle forward(60) / backward(60)">forward(60)</button>
+                            <span class="text-slate-400 text-[10px] ml-1"># click to toggle</span>
+                        </div>
+                    </div>
+
+                    <!-- Color-Matched Action Buttons -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="togglePenState()" id="btn-toggle-pen" class="btn-interactive bg-emerald-600 hover:bg-emerald-700 text-white font-mono text-xs py-2 rounded-xl font-bold shadow-sm">
+                            Toggle: pendown() ⇄ penup()
+                        </button>
+                        <button onclick="executeLineMove()" id="btn-run-move" class="btn-interactive bg-alphagen-purple hover:bg-alphagen-purpleDark text-white font-mono text-xs py-2 rounded-xl font-bold shadow-sm">
+                            ▶ Run forward(60)
+                        </button>
+                    </div>
+
+                    <div class="flex items-center justify-between text-xs font-bold pt-1">
+                        <span>Pen Size: <span id="s7-size-val" class="text-alphagen-purple font-mono">4</span>px</span>
+                        <input type="range" min="2" max="14" value="4" id="s7-size-slider" oninput="updateLineStyle()" class="w-36 accent-[#5E48C4] cursor-pointer">
+                    </div>
+
+                    <div class="flex items-center justify-between text-xs font-bold">
+                        <span>Pen Color:</span>
+                        <div class="flex gap-2">
+                            <button onclick="setLineColor('#5E48C4', 'purple')" class="w-6 h-6 rounded-full bg-[#5E48C4] border-2 border-white shadow"></button>
+                            <button onclick="setLineColor('#ED5661', 'coral')" class="w-6 h-6 rounded-full bg-[#ED5661] border-2 border-white shadow"></button>
+                            <button onclick="setLineColor('#059669', 'green')" class="w-6 h-6 rounded-full bg-[#059669] border-2 border-white shadow"></button>
+                            <button onclick="setLineColor('#2563EB', 'blue')" class="w-6 h-6 rounded-full bg-[#2563EB] border-2 border-white shadow"></button>
+                        </div>
+                    </div>
+
+                    <button onclick="resetLineCanvas()" class="w-full bg-white border border-alphagen-purplePale hover:bg-slate-100 text-alphagen-nearBlack font-bold text-xs py-1.5 rounded-xl">
+                        ↻ Reset Canvas
+                    </button>
+                </div>
+
+                <!-- Interactive Canvas -->
+                <div class="col-span-7">
+                    <div class="turtle-window">
+                        <div class="turtle-titlebar">
+                            <span>Interactive Line Lab</span>
+                            <span id="s7-pen-badge" class="text-emerald-400 font-bold">STATE: PENDOWN (DRAWING)</span>
+                        </div>
+                        <div class="bg-white relative">
+                            <canvas id="line-canvas" width="640" height="270" class="w-full h-[270px] block"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+           
+        </div>
+
+        <!-- SLIDE 8: CODING CHALLENGE 1 - CLEAN CHECKLIST -->
+        <div id="slide-8" class="slide-panel">
+            <div>
+                <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-3 py-1 rounded-md border border-alphagen-purplePale">Hands-On Coding Challenge 1</span>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-alphagen-purple mt-1">Coding Challenge: <span class="text-alphagen-cyanDark">Set Up Screen &amp; Draw a Line</span></h2>
+            </div>
+
+            <div class="max-w-3xl mx-auto my-auto w-full space-y-3">
+                <div class="checkbox-card" id="tchal1-1" onclick="toggleChecklist('tchal1-', 4, this.id)">
+                    <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                    <div>
+                        <h3 class="font-extrabold text-alphagen-purple text-sm">Step 1: Import the Turtle library</h3>
+                    </div>
+                </div>
+
+                <div class="checkbox-card" id="tchal1-2" onclick="toggleChecklist('tchal1-', 4, this.id)">
+                    <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                    <div>
+                        <h3 class="font-extrabold text-alphagen-purple text-sm">Step 2: Create the screen and set the screen size</h3>
+                    </div>
+                </div>
+
+                <div class="checkbox-card" id="tchal1-3" onclick="toggleChecklist('tchal1-', 4, this.id)">
+                    <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                    <div>
+                        <h3 class="font-extrabold text-alphagen-purple text-sm">Step 3: Add background color to the screen</h3>
+                    </div>
+                </div>
+
+                <div class="checkbox-card" id="tchal1-4" onclick="toggleChecklist('tchal1-', 4, this.id)">
+                    <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                    <div>
+                        <h3 class="font-extrabold text-alphagen-purple text-sm">Step 4: Initialize a pen variable and draw a line forward</h3>
+                    </div>
+                </div>
+            </div>
+
+         
+        </div>
+
+        <!-- SLIDE 9: TURNING LEFT & RIGHT WITH TOGGLEABLE ANGLE -->
+        <div id="slide-9" class="slide-panel">
+            <div>
+                <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-3 py-1 rounded-md border border-alphagen-purplePale">Angles &amp; Directions</span>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-alphagen-purple mt-1">Turning the Turtle: <span class="text-alphagen-cyanDark">Left &amp; Right Angles</span></h2>
+            </div>
+
+            <div class="grid grid-cols-12 gap-5 my-auto items-center">
+                <div class="col-span-5 space-y-3">
+                    <div class="bg-alphagen-nearBlack text-white font-mono text-xs p-3.5 rounded-2xl space-y-1.5 leading-relaxed">
+                        <div class="text-alphagen-yellow">pen.forward(100)</div>
+                        <div>
+                            <span class="text-alphagen-cyan">pen.</span><button onclick="toggleTurnMethod()" id="s9-method-btn" class="bg-alphagen-cyanDark hover:bg-cyan-700 text-white font-bold px-2 py-0.5 rounded underline decoration-dotted cursor-pointer">left</button><span class="text-alphagen-cyan">(</span><button onclick="cycleTurnAngle()" id="s9-angle-code-btn" class="bg-alphagen-yellow text-alphagen-nearBlack font-extrabold px-2 py-0.5 rounded cursor-pointer" title="Click to toggle angle">90</button><span class="text-alphagen-cyan">)</span>
+                            <span class="text-slate-400 text-[10px] ml-1"># click to toggle</span>
+                        </div>
+                        <div class="text-alphagen-yellow">pen.forward(100)</div>
+                    </div>
+
+                    <div class="bg-alphagen-purpleGhost border-2 border-alphagen-purplePale p-4 rounded-2xl space-y-3">
+                        <div class="flex items-center justify-between text-xs font-bold">
+                            <span>Angle Value: <span id="s9-angle-val" class="text-alphagen-purple font-mono">90</span>°</span>
+                            <button onclick="cycleTurnAngle()" class="btn-interactive bg-alphagen-yellow text-alphagen-nearBlack font-mono text-xs px-3 py-1 rounded-lg font-extrabold">
+                                ↻ Toggle Angle (45° / 60° / 72° / 90° / 120°)
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="applyTurnFromToggle()" id="s9-turn-exec-btn" class="btn-interactive bg-alphagen-cyanDark text-white font-mono text-xs py-2.5 rounded-xl font-bold">
+                                ↺ Turn left(90)
+                            </button>
+                            <button onclick="forwardTurnCanvas()" class="btn-interactive bg-alphagen-purple text-white font-mono text-xs py-2.5 rounded-xl font-bold">
+                                ↑ pen.forward(100)
+                            </button>
+                        </div>
+
+                        <button onclick="resetTurnCanvas()" class="w-full bg-white border border-alphagen-purplePale text-xs font-bold py-1.5 rounded-xl">
+                            ↻ Reset Heading &amp; Canvas
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-span-7">
+                    <div class="turtle-window">
+                        <div class="turtle-titlebar">
+                            <span>Angle &amp; Direction Simulator</span>
+                            <span id="s9-heading-badge" class="text-alphagen-yellow font-bold">HEADING: 0° (EAST)</span>
+                        </div>
+                        <div class="bg-white">
+                            <canvas id="turn-canvas" width="640" height="275" class="w-full h-[275px] block"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+           
+        </div>
+
+        <!-- SLIDE 10: DEDICATED CHALLENGE PAGE - SQUARE & PENTAGON (NO SYNTAX EXPLANATION) -->
+        <div id="slide-10" class="slide-panel">
+            <div>
+                <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-3 py-1 rounded-md border border-alphagen-purplePale">Hands-On Coding Challenge 2</span>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-alphagen-purple mt-1">Coding Challenge: <span class="text-alphagen-cyanDark">Draw Closed Shapes with Turns</span></h2>
+            </div>
+
+            <div class="grid grid-cols-2 gap-6 max-w-4xl mx-auto my-auto w-full">
+                <!-- Challenge Card 1: Square -->
+                <div class="checkbox-card flex-col items-start p-6 space-y-4" id="shapechal-1" onclick="toggleChecklist('shapechal-', 2, this.id)">
+                    <div class="flex items-center justify-between w-full">
+                        <span class="bg-alphagen-purple text-white text-xs font-extrabold px-3 py-1 rounded-full">CHALLENGE A</span>
+                        <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                    </div>
+                    <div class="w-full flex items-center justify-center py-3">
+                        <div class="w-24 h-24 border-4 border-alphagen-purple bg-alphagen-purpleGhost rounded-md"></div>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-lg text-alphagen-nearBlack">Try Drawing a Square</h3>
+                       
+                    </div>
+                </div>
+
+                <!-- Challenge Card 2: Pentagon -->
+                <div class="checkbox-card flex-col items-start p-6 space-y-4" id="shapechal-2" onclick="toggleChecklist('shapechal-', 2, this.id)">
+                    <div class="flex items-center justify-between w-full">
+                        <span class="bg-alphagen-yellow text-alphagen-nearBlack text-xs font-extrabold px-3 py-1 rounded-full">CHALLENGE B</span>
+                        <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                    </div>
+                    <div class="w-full flex items-center justify-center py-3">
+                        <svg viewBox="0 0 100 100" class="w-24 h-24">
+                            <polygon points="50,8 92,38 76,88 24,88 8,38" fill="#FFF3CC" stroke="#E6B84A" stroke-width="5" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-lg text-alphagen-nearBlack">Try Drawing a Pentagon</h3>
+                      
+                    </div>
+                </div>
+            </div>
+
+          
+        </div>
+
+        <!-- SLIDE 11: MULTIPLE SHAPES - GOTO(X, Y) & FILL COLOR -->
+        <div id="slide-11" class="slide-panel">
+            <div>
+                <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-3 py-1 rounded-md border border-alphagen-purplePale">Coordinates &amp; Coloring</span>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-alphagen-purple mt-1">Multiple Shapes: <span class="text-alphagen-cyanDark">goto(x, y) &amp; fillcolor()</span></h2>
+            </div>
+
+            <div class="grid grid-cols-12 gap-5 my-auto items-center">
+                <div class="col-span-5 space-y-2.5">
+                    <div class="bg-alphagen-purpleGhost border-2 border-alphagen-purplePale p-3.5 rounded-2xl space-y-2">
+                        <div class="grid grid-cols-2 gap-2 text-xs font-bold">
+                            <div>
+                                <label>X Coordinate: <span id="s11-x-val" class="text-alphagen-purple font-mono">-140</span></label>
+                                <input type="range" min="-220" max="220" step="20" value="-140" id="s11-x-slider" oninput="updateGotoPreview()" class="w-full accent-[#5E48C4]">
+                            </div>
+                            <div>
+                                <label>Y Coordinate: <span id="s11-y-val" class="text-alphagen-purple font-mono">0</span></label>
+                                <input type="range" min="-100" max="100" step="20" value="0" id="s11-y-slider" oninput="updateGotoPreview()" class="w-full accent-[#5E48C4]">
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between text-xs font-bold">
+                            <span>Fill Color:</span>
+                            <select id="s11-color-select" onchange="updateGotoPreview()" class="bg-white border border-alphagen-purplePale rounded-lg px-2 py-1 font-mono text-xs">
+                                <option value="#FFD071">gold</option>
+                                <option value="#59E4FB">cyan</option>
+                                <option value="#ED5661">coral</option>
+                                <option value="#7B6ED4">purple</option>
+                            </select>
+                        </div>
+
+                        <!-- Clear Multi-line begin_fill() ... end_fill() structure -->
+                        <div class="bg-alphagen-nearBlack text-white font-mono text-[11px] p-2.5 rounded-xl leading-relaxed">
+                            pen.penup()<br>
+                            pen.goto(<span id="s11-code-x" class="text-alphagen-yellow">-140</span>, <span id="s11-code-y" class="text-alphagen-yellow">0</span>)<br>
+                            pen.pendown()<br>
+                            pen.fillcolor("<span id="s11-code-col" class="text-alphagen-cyan">gold</span>")<br>
+                            <span class="text-emerald-400">pen.begin_fill()</span><br>
+                            <span class="text-slate-300">&nbsp;&nbsp;&nbsp;&nbsp;# draw your shape lines here</span><br>
+                            <span class="text-emerald-400">pen.end_fill()</span>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button onclick="stampShapeAtGoto()" class="btn-interactive flex-1 bg-alphagen-purple text-white font-bold text-xs py-2 rounded-xl">
+                                Move &amp; Draw Filled Shape
+                            </button>
+                            <button onclick="clearGotoCanvas()" class="btn-interactive bg-white border border-alphagen-purplePale text-xs font-bold px-3 rounded-xl">
+                                Clear
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Identical Shapes Challenge -->
+                    <div class="bg-alphagen-yellowPale border-2 border-alphagen-yellowDark p-3 rounded-2xl">
+                        <span class="bg-alphagen-yellow text-alphagen-nearBlack text-[10px] font-extrabold px-2 py-0.5 rounded">CODING CHALLENGE</span>
+                        <p class="text-xs font-bold text-alphagen-nearBlack mt-1">
+                            Draw <strong>two identical filled shapes</strong>: move one to the left (<code class="bg-white px-1 rounded">goto(-140, 0)</code>) and one to the right (<code class="bg-white px-1 rounded">goto(140, 0)</code>)!
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-span-7">
+                    <div class="turtle-window">
+                        <div class="turtle-titlebar">
+                            <span>Coordinate Grid (Center = 0, 0)</span>
+                            <span id="s11-pos-badge" class="text-alphagen-cyan font-bold">TURTLE AT (-140, 0)</span>
+                        </div>
+                        <div class="bg-white">
+                            <canvas id="goto-canvas" width="640" height="275" class="w-full h-[275px] block"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+           
+        </div>
+
+        <!-- SLIDE 12: DRAWING CLOSED SHAPES USING LOOPS + PENTAGON ANGLE QUESTION & OCTAGON/HEXAGON CHALLENGE -->
+        <div id="slide-12" class="slide-panel">
+            <div>
+                <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-3 py-1 rounded-md border border-alphagen-purplePale">Smart Repetition</span>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-alphagen-purple mt-1">Closed Shapes with Loops: <span class="text-alphagen-cyanDark">360° ÷ Sides = Turn Angle</span></h2>
+            </div>
+
+            <div class="grid grid-cols-12 gap-4 my-auto items-center">
+                <div class="col-span-6 space-y-2.5">
+                    <div class="bg-alphagen-purpleGhost border-2 border-alphagen-purplePale p-3.5 rounded-2xl space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-extrabold text-alphagen-purple uppercase">Choose Shape:</span>
+                            <div class="flex gap-2">
+                                <button onclick="setPolygonSides(3)" id="poly-btn-3" class="poly-btn btn-interactive bg-white border border-alphagen-purplePale px-3 py-1 rounded-lg text-xs font-bold">3 (Triangle)</button>
+                                <button onclick="setPolygonSides(4)" id="poly-btn-4" class="poly-btn btn-interactive bg-alphagen-purple text-white px-3 py-1 rounded-lg text-xs font-bold">4 (Square)</button>
+                                <button onclick="setPolygonSides(6)" id="poly-btn-6" class="poly-btn btn-interactive bg-white border border-alphagen-purplePale px-3 py-1 rounded-lg text-xs font-bold">6 (Hexagon)</button>
+                            </div>
+                        </div>
+
+                        <div class="bg-white border-2 border-alphagen-purplePale rounded-xl p-2.5 text-center">
+                            <div class="text-lg font-extrabold text-alphagen-purple font-mono" id="s12-formula">
+                                360° ÷ 4 sides = 90° turn
+                            </div>
+                            <p class="text-[11px] text-alphagen-cyanDark font-bold mt-0.5" id="s12-loop-explain">
+                                The loop runs 4 times, turning 90° each time!
+                            </p>
+                        </div>
+
+                        <div class="bg-alphagen-nearBlack text-alphagen-yellow font-mono text-xs p-2.5 rounded-xl">
+                            for i in range(<span id="s12-code-sides">4</span>):<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;pen.forward(<span id="s12-code-len">95</span>)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;pen.left(<span id="s12-code-angle">90</span>)
+                        </div>
+                    </div>
+
+                    <!-- Pentagon Angle Quick Question -->
+                    <div class="bg-alphagen-cyanPale border-2 border-alphagen-cyanDark p-3 rounded-2xl space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="bg-alphagen-cyanDark text-white text-[10px] font-extrabold px-2 py-0.5 rounded">QUICK QUESTION</span>
+                            <span class="text-[11px] font-bold text-alphagen-cyanDark" id="pentagon-q-status">Calculate: 360 ÷ 5</span>
+                        </div>
+                        <p class="text-xs font-bold text-alphagen-nearBlack">
+                            If I want to create a <strong>Pentagon</strong> (5 sides), what should be the turn angle?
+                        </p>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button onclick="checkPentagonAngle(60, this)" class="pent-opt btn-interactive bg-white border border-alphagen-cyanDark py-1.5 rounded-lg font-mono text-xs font-bold">60°</button>
+                            <button onclick="checkPentagonAngle(72, this)" class="pent-opt btn-interactive bg-white border border-alphagen-cyanDark py-1.5 rounded-lg font-mono text-xs font-bold">72°</button>
+                            <button onclick="checkPentagonAngle(90, this)" class="pent-opt btn-interactive bg-white border border-alphagen-cyanDark py-1.5 rounded-lg font-mono text-xs font-bold">90°</button>
+                        </div>
+                    </div>
+
+                    <!-- Coding Challenge for Octagon & Hexagon -->
+                    <div class="bg-alphagen-yellowPale border-2 border-alphagen-yellowDark p-2.5 rounded-2xl">
+                        <span class="bg-alphagen-yellow text-alphagen-nearBlack text-[10px] font-extrabold px-2 py-0.5 rounded">CODING CHALLENGE</span>
+                        <p class="text-xs font-bold text-alphagen-nearBlack mt-1">
+                            Using a <code class="bg-white px-1 rounded">for</code> loop, build an <strong>Octagon</strong> (8 sides) and a <strong>Hexagon</strong> (6 sides) in Python!
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-span-6">
+                    <div class="turtle-window">
+                        <div class="turtle-titlebar">
+                            <span>Polygon Loop Visualizer</span>
+                            <span id="s12-shape-name" class="text-emerald-400 font-bold">SHAPE: SQUARE</span>
+                        </div>
+                        <div class="bg-white">
+                            <canvas id="poly-canvas" width="540" height="295" class="w-full h-[295px] block"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+           
+        </div>
+
+        <!-- SLIDE 13: SCENE BUILDING CHALLENGE (HOUSE & SUN - NO EXTRA CODE BELOW POINTERS) -->
+        <div id="slide-13" class="slide-panel">
+            <div>
+                <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-3 py-1 rounded-md border border-alphagen-purplePale">Creative Project</span>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-alphagen-purple mt-1">Scene Challenge: <span class="text-alphagen-cyanDark">Build a House &amp; a Bright Sun!</span></h2>
+            </div>
+
+            <div class="grid grid-cols-12 gap-6 my-auto items-center">
+                <!-- Sample Reference Diagram -->
+                <div class="col-span-6">
+                    <div class="turtle-window">
+                        <div class="turtle-titlebar">
+                            <span>Sample Reference Scene</span>
+                            <span class="text-alphagen-yellow">Target Output</span>
+                        </div>
+                        <svg viewBox="0 0 500 280" class="w-full h-[270px] bg-[#E0F2FE] block">
+                            <!-- Grass -->
+                            <rect x="0" y="215" width="500" height="65" fill="#4ADE80" />
+                            <!-- Sun with Rays -->
+                            <g transform="translate(395, 65)">
+                                <circle cx="0" cy="0" r="28" fill="#FACC15" stroke="#EAB308" stroke-width="3" />
+                                <line x1="0" y1="-42" x2="0" y2="-33" stroke="#EAB308" stroke-width="4" stroke-linecap="round" />
+                                <line x1="0" y1="33" x2="0" y2="42" stroke="#EAB308" stroke-width="4" stroke-linecap="round" />
+                                <line x1="-42" y1="0" x2="-33" y2="0" stroke="#EAB308" stroke-width="4" stroke-linecap="round" />
+                                <line x1="33" y1="0" x2="42" y2="0" stroke="#EAB308" stroke-width="4" stroke-linecap="round" />
+                                <line x1="-30" y1="-30" x2="-23" y2="-23" stroke="#EAB308" stroke-width="4" stroke-linecap="round" />
+                                <line x1="23" y1="23" x2="30" y2="30" stroke="#EAB308" stroke-width="4" stroke-linecap="round" />
+                                <line x1="30" y1="-30" x2="23" y2="-23" stroke="#EAB308" stroke-width="4" stroke-linecap="round" />
+                                <line x1="-23" y1="23" x2="-30" y2="30" stroke="#EAB308" stroke-width="4" stroke-linecap="round" />
+                            </g>
+                            <!-- House Body (Square) -->
+                            <rect x="110" y="115" width="130" height="100" fill="#FDE68A" stroke="#1E293B" stroke-width="3" />
+                            <!-- Roof (Triangle) -->
+                            <polygon points="98,115 175,45 252,115" fill="#ED5661" stroke="#1E293B" stroke-width="3" />
+                            <!-- Door (Rectangle) -->
+                            <rect x="160" y="160" width="30" height="55" fill="#7C2D12" stroke="#1E293B" stroke-width="2" />
+                            <!-- Window -->
+                            <rect x="125" y="135" width="24" height="24" fill="#BAE6FD" stroke="#1E293B" stroke-width="2" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Clean Pointers Checklist (No extra code below pointers) -->
+                <div class="col-span-6 space-y-3">
+                    <div class="checkbox-card" id="scene-1" onclick="toggleChecklist('scene-', 4, this.id)">
+                        <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                        <div>
+                            <h3 class="font-extrabold text-alphagen-purple text-sm">1. Draw the House Base (Square)</h3>
+                        </div>
+                    </div>
+
+                    <div class="checkbox-card" id="scene-2" onclick="toggleChecklist('scene-', 4, this.id)">
+                        <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                        <div>
+                            <h3 class="font-extrabold text-alphagen-purple text-sm">2. Add the Triangular Roof</h3>
+                        </div>
+                    </div>
+
+                    <div class="checkbox-card" id="scene-3" onclick="toggleChecklist('scene-', 4, this.id)">
+                        <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                        <div>
+                            <h3 class="font-extrabold text-alphagen-purple text-sm">3. Add a Door &amp; Window</h3>
+                        </div>
+                    </div>
+
+                    <div class="checkbox-card" id="scene-4" onclick="toggleChecklist('scene-', 4, this.id)">
+                        <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                        <div>
+                            <h3 class="font-extrabold text-alphagen-purple text-sm">4. Draw the Sun in the Sky</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+           
+        </div>
+
+        <!-- SLIDE 14: NESTED LOOPS - CONCENTRIC TRIANGLES (SINGLE COLOR, SLOW ANIMATED HIGHLIGHT, OUTER 4-10, HEXAGON CHALLENGE) -->
+        <div id="slide-14" class="slide-panel">
+            <div>
+                <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-3 py-1 rounded-md border border-alphagen-purplePale">Spirograph Art</span>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-alphagen-purple mt-1">Nested Loops: <span class="text-alphagen-cyanDark">Concentric Rotating Triangles</span></h2>
+            </div>
+
+            <div class="grid grid-cols-12 gap-4 my-auto items-center">
+                <div class="col-span-5 space-y-2">
+                    <!-- Code Block with Live Inner & Outer Loop Highlighting -->
+                    <div class="bg-alphagen-nearBlack text-white font-mono text-[11px] p-3 rounded-2xl space-y-1 leading-relaxed">
+                        <div id="s14-code-outer" class="px-2 py-0.5 rounded transition-colors">
+                            <span class="text-alphagen-cyan">for outer in range(<span id="s14-outer-val">6</span>):</span>
+                        </div>
+                        <div id="s14-code-inner" class="px-2 py-0.5 rounded transition-colors">
+                            <span class="text-alphagen-yellow">&nbsp;&nbsp;&nbsp;&nbsp;for inner in range(3):</span><br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pen.forward(105)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pen.left(120)
+                        </div>
+                        <div id="s14-code-turn" class="px-2 py-0.5 rounded transition-colors">
+                            <span class="text-emerald-400">&nbsp;&nbsp;&nbsp;&nbsp;pen.right(<span id="s14-rot-val">60</span>)</span>
+                        </div>
+                    </div>
+
+                    <!-- Outer Repeat Slider (4 to 10) + Slow Simulation Button -->
+                    <div class="bg-alphagen-purpleGhost border-2 border-alphagen-purplePale p-3 rounded-2xl space-y-2">
+                        <div class="flex items-center justify-between text-xs font-bold">
+                            <span>Outer Repeats (4–10): <span id="s14-count-label" class="text-alphagen-purple font-mono">6</span></span>
+                            <input type="range" min="4" max="10" step="1" value="6" id="s14-slider" oninput="resetAndDrawNestedInstant()" class="w-32 accent-[#5E48C4]">
+                        </div>
+                        <div class="text-[11px] font-bold text-alphagen-cyanDark bg-white px-2.5 py-1 rounded-lg border border-alphagen-purplePale text-center">
+                            Note: <span id="s14-mult-note" class="font-mono">6 × 60° = 360°</span> (Outer repeats × pen.right angle = 360°)
+                        </div>
+                        <button onclick="startSlowNestedSim()" id="s14-sim-btn" class="btn-interactive w-full bg-alphagen-purple text-white text-xs font-bold py-2 rounded-xl">
+                            ▶ Run Simulation
+                        </button>
+                    </div>
+
+                    <!-- Interactive Hexagon Concentric Challenge -->
+                    <div class="bg-alphagen-yellowPale border-2 border-alphagen-yellowDark p-3 rounded-2xl space-y-1.5">
+                        <span class="bg-alphagen-yellow text-alphagen-nearBlack text-[10px] font-extrabold px-2 py-0.5 rounded">HEXAGON CONCENTRIC CHALLENGE</span>
+                        <p class="text-[11px] font-bold text-alphagen-nearBlack">
+                            To create a concentric shape using a <strong>Hexagon</strong>, what should the loop ranges be?
+                        </p>
+                        <div class="grid grid-cols-2 gap-2 pt-0.5">
+                            <div>
+                                <label class="text-[10px] font-extrabold block">Inner range (sides):</label>
+                                <input type="number" id="hex-inner-input" placeholder="" class="w-full bg-white border border-alphagen-yellowDark rounded-lg px-2 py-1 text-xs font-mono">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-extrabold block">Outer range :</label>
+                                <input type="number" id="hex-outer-input" placeholder="" class="w-full bg-white border border-alphagen-yellowDark rounded-lg px-2 py-1 text-xs font-mono">
+                            </div>
+                        </div>
+                        <button onclick="checkHexagonNestedInput()" class="btn-interactive w-full bg-alphagen-nearBlack text-alphagen-yellow text-[11px] font-bold py-1.5 rounded-lg mt-1">
+                            Check My Ranges
+                        </button>
+                        <p id="hex-nested-feedback" class="text-[11px] font-bold text-alphagen-purple"></p>
+                    </div>
+                </div>
+
+                <div class="col-span-7">
+                    <div class="turtle-window">
+                        <div class="turtle-titlebar">
+                            <span>Concentric Triangle Visualizer (Single Stroke Color)</span>
+                            <span id="s14-badge" class="text-alphagen-yellow font-bold">6 TRIANGLES × 60° = 360°</span>
+                        </div>
+                        <div class="bg-white">
+                            <canvas id="nested-canvas" width="640" height="285" class="w-full h-[285px] block"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+           
+        </div>
+
+        <!-- SLIDE 15: FUN CHALLENGE - RANDOM MODULE & RGB CONCENTRIC CHALLENGE -->
+        <div id="slide-15" class="slide-panel">
+            <div>
+                <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-3 py-1 rounded-md border border-alphagen-purplePale">Randomness &amp; RGB</span>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-alphagen-purple mt-1">Fun Challenge: <span class="text-alphagen-cyanDark">random.randint() &amp; Colorful Concentric Art</span></h2>
+            </div>
+
+            <div class="grid grid-cols-12 gap-5 my-auto items-center">
+                <div class="col-span-5 space-y-2.5">
+                    <div class="bg-alphagen-purpleGhost border-2 border-alphagen-purplePale p-3 rounded-2xl space-y-1.5">
+                        <h3 class="text-xs font-extrabold text-alphagen-purple uppercase">What is random.randint()?</h3>
+                        <p class="text-[11px] text-alphagen-nearBlack font-medium leading-relaxed">
+                            <code class="bg-white px-1 rounded font-bold text-alphagen-purple">random.randint(0, 255)</code> picks a random whole number from <strong>0 to 255</strong>. Because RGB colors mix Red, Green, and Blue (0–255), putting it inside your concentric loop changes the shade on every repeat!
+                        </p>
+                    </div>
+
+                    <div class="bg-alphagen-nearBlack text-white font-mono text-[11px] p-3 rounded-2xl leading-snug">
+                        <span class="text-alphagen-cyan">import turtle, random</span><br>
+                        turtle.colormode(255)<br>
+                        for outer in range(12):<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;r = random.randint(0, 255)  # <span id="s15-r" class="text-red-400">255</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;g = random.randint(0, 255)  # <span id="s15-g" class="text-emerald-400">208</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;b = random.randint(0, 255)  # <span id="s15-b" class="text-cyan-400">113</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-alphagen-yellow">pen.pencolor(r, g, b)</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-emerald-300">pen.fillcolor(r, g, b)</span>
+                    </div>
+
+                    <button onclick="generateRandomConcentric()" class="btn-interactive w-full bg-alphagen-yellow hover:bg-alphagen-yellowDark text-alphagen-nearBlack font-extrabold text-xs py-2 rounded-xl shadow-md">
+                        Run Simulation
+                    </button>
+
+                    <!-- Concentric Square & Pentagon Challenge -->
+                    <div class="bg-alphagen-yellowPale border-2 border-alphagen-yellowDark p-2.5 rounded-2xl">
+                        <span class="bg-alphagen-yellow text-alphagen-nearBlack text-[10px] font-extrabold px-2 py-0.5 rounded">CHALLENGE</span>
+                        <p class="text-[11px] font-bold text-alphagen-nearBlack mt-1">
+                            Build a concentric circular pattern using a <strong>Square</strong> AND a concentric shape using a <strong>Pentagon</strong> with random RGB colors inside the loop!
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-span-7">
+                    <div class="turtle-window">
+                        <div class="turtle-titlebar">
+                            <span>Random RGB Concentric Generator</span>
+                            <span id="s15-rgb-badge" class="text-alphagen-yellow font-bold">LATEST RGB(255, 208, 113)</span>
+                        </div>
+                        <div class="bg-slate-950 relative">
+                            <canvas id="random-canvas" width="640" height="280" class="w-full h-[280px] block"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            
+        </div>
+
+        <!-- SLIDE 16: FINAL CELEBRATION QUIZ (PEN UP, PEN DOWN & HOW TO FILL A SHAPE) -->
+        <div id="slide-16" class="slide-panel">
+            <div>
+                <span class="text-xs uppercase font-extrabold tracking-wider text-alphagen-purple bg-alphagen-purpleGhost px-3 py-1 rounded-md border border-alphagen-purplePale">Grand Finale Check</span>
+                <h2 class="text-xl md:text-2xl font-extrabold text-alphagen-purple mt-1">Python Turtle <span class="text-alphagen-cyanDark">Final Celebration Quiz!</span></h2>
+            </div>
+
+            <div class="grid grid-cols-3 gap-5 my-auto">
+                <!-- Q1: Pen Up -->
+                <div class="bg-alphagen-purpleGhost border-2 border-alphagen-purplePale p-4 rounded-2xl flex flex-col justify-between">
+                    <div>
+                        <span class="text-[10px] font-extrabold text-alphagen-purple bg-white px-2 py-0.5 rounded border border-alphagen-purplePale">Question 1 of 3</span>
+                        <h3 class="text-xs font-bold text-alphagen-nearBlack mt-2 mb-3">Which command lifts the turtle's pen so it can move without drawing a line?</h3>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="quiz-option font-mono" onclick="checkFinalQuiz(1, 1, this)">A) pen.pendown()</div>
+                        <div class="quiz-option font-mono" onclick="checkFinalQuiz(1, 2, this)">B) pen.penup()</div>
+                        <div class="quiz-option font-mono" onclick="checkFinalQuiz(1, 3, this)">C) pen.forward(0)</div>
+                    </div>
+                </div>
+
+                <!-- Q2: Pen Down -->
+                <div class="bg-alphagen-purpleGhost border-2 border-alphagen-purplePale p-4 rounded-2xl flex flex-col justify-between">
+                    <div>
+                        <span class="text-[10px] font-extrabold text-alphagen-purple bg-white px-2 py-0.5 rounded border border-alphagen-purplePale">Question 2 of 3</span>
+                        <h3 class="text-xs font-bold text-alphagen-nearBlack mt-2 mb-3">After using <code class="text-alphagen-purple">pen.goto(x, y)</code>, which command lowers the pen to start drawing again?</h3>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="quiz-option font-mono" onclick="checkFinalQuiz(2, 1, this)">A) pen.pendown()</div>
+                        <div class="quiz-option font-mono" onclick="checkFinalQuiz(2, 2, this)">B) pen.penup()</div>
+                        <div class="quiz-option font-mono" onclick="checkFinalQuiz(2, 3, this)">C) pen.pensize(0)</div>
+                    </div>
+                </div>
+
+                <!-- Q3: How to Fill a Shape -->
+                <div class="bg-alphagen-purpleGhost border-2 border-alphagen-purplePale p-4 rounded-2xl flex flex-col justify-between">
+                    <div>
+                        <span class="text-[10px] font-extrabold text-alphagen-purple bg-white px-2 py-0.5 rounded border border-alphagen-purplePale">Question 3 of 3</span>
+                        <h3 class="text-xs font-bold text-alphagen-nearBlack mt-2 mb-3">How do you fill a closed shape with color in Python Turtle?</h3>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="quiz-option font-mono text-[11px]" onclick="checkFinalQuiz(3, 1, this)">A) Set fillcolor(), draw shape, then call begin_fill()</div>
+                        <div class="quiz-option font-mono text-[11px]" onclick="checkFinalQuiz(3, 2, this)">B) Set fillcolor(), call begin_fill(), draw shape, then end_fill()</div>
+                        <div class="quiz-option font-mono text-[11px]" onclick="checkFinalQuiz(3, 3, this)">C) Only call screen.bgcolor("gold")</div>
+                    </div>
+                </div>
+            </div>
+
+           
+        </div>
+
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <div class="nav-bar">
+        <button id="prev-btn" class="nav-btn btn-interactive" onclick="prevSlide()" disabled>
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>Previous</span>
+        </button>
+
+        <span class="text-xs font-semibold text-white">
+            Use Left / Right Arrow Keys to navigate slides
+        </span>
+
+        <button id="next-btn" class="nav-btn btn-interactive" onclick="nextSlide()">
+            <span>Next</span>
+            <i class="fa-solid fa-arrow-right"></i>
+        </button>
+    </div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 16;
+        let soundEnabled = true;
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function toggleAudio() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('audio-btn');
+            btn.innerHTML = soundEnabled ? '<i class="fa-solid fa-volume-high"></i>' : '<i class="fa-solid fa-volume-xmark"></i>';
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'correct') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(659.25, audioCtx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+                } else if (type === 'pop') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(360, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(720, audioCtx.currentTime + 0.08);
+                    gain.gain.setValueAtTime(0.09, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.08);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(110, audioCtx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.09, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.25);
+                }
+            } catch (e) {}
+        }
+
+        function triggerConfetti() {
+            if (typeof confetti === 'function') {
+                confetti({ particleCount: 95, spread: 70, origin: { y: 0.6 } });
+            }
+        }
+
+        function initHeaderDots() {
+            const container = document.getElementById('header-dots-container');
+            container.innerHTML = '';
+            for (let i = 1; i <= totalSlides; i++) {
+                const dot = document.createElement('div');
+                dot.className = `dot-indicator ${i === 1 ? 'active' : ''}`;
+                dot.onclick = () => goToSlide(i);
+                container.appendChild(dot);
+            }
+        }
+
+        function updateSlideDisplay() {
+            if (currentSlide !== 14 && nestedSimTimer) {
+                clearTimeout(nestedSimTimer);
+                nestedSimTimer = null;
+            }
+            document.querySelectorAll('.slide-panel').forEach((panel, idx) => {
+                panel.classList.toggle('active', idx + 1 === currentSlide);
+            });
+
+            document.querySelectorAll('.dot-indicator').forEach((dot, idx) => {
+                dot.classList.toggle('active', idx + 1 === currentSlide);
+            });
+
+            document.getElementById('slide-counter-pill').innerText = `Slide ${currentSlide} / ${totalSlides}`;
+            document.getElementById('slide-dropdown').value = currentSlide;
+
+            document.getElementById('prev-btn').disabled = currentSlide === 1;
+            document.getElementById('next-btn').disabled = currentSlide === totalSlides;
+
+            if (currentSlide === 7) drawLineCanvas();
+            if (currentSlide === 9) drawTurnCanvas();
+            if (currentSlide === 11) drawGotoCanvas();
+            if (currentSlide === 12) setPolygonSides(currentPolySides);
+            if (currentSlide === 14) resetAndDrawNestedInstant();
+            if (currentSlide === 15) generateRandomConcentric();
+        }
+
+        function goToSlide(slideNum) {
+            if (slideNum >= 1 && slideNum <= totalSlides) {
+                currentSlide = slideNum;
+                playSound('pop');
+                updateSlideDisplay();
+            }
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides) goToSlide(currentSlide + 1);
+        }
+
+        function prevSlide() {
+            if (currentSlide > 1) goToSlide(currentSlide - 1);
+        }
+
+        /* Helper to draw a cute turtle icon on any 2D canvas */
+        function drawTurtleAvatar(ctx, x, y, angleDeg, color) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate((angleDeg * Math.PI) / 180);
+            ctx.fillStyle = '#15803d';
+            [[-7, -9], [7, -9], [-7, 9], [7, 9]].forEach(([lx, ly]) => {
+                ctx.beginPath();
+                ctx.arc(lx, ly, 3.5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.beginPath();
+            ctx.arc(13, 0, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = color || '#22c55e';
+            ctx.strokeStyle = '#14532d';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, 0, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        /* SLIDE 2 & 3 RECAP QUIZZES */
+        const recapAns = { 1: 2, 2: 1, 3: 2, 4: 3 };
+        const recapState = { 1: null, 2: null, 3: null, 4: null };
+
+        function checkRecap1(qNum, optNum, el) {
+            if (recapState[qNum] !== null) return;
+            recapState[qNum] = optNum;
+            const opts = el.parentElement.querySelectorAll('.quiz-option');
+            opts.forEach((opt, i) => {
+                if (i + 1 === recapAns[qNum]) opt.classList.add('correct');
+                else if (i + 1 === optNum) opt.classList.add('wrong');
+            });
+            playSound(optNum === recapAns[qNum] ? 'correct' : 'wrong');
+
+            if (recapState[1] !== null && recapState[2] !== null) {
+                const banner = document.getElementById('recap1-banner');
+                if (recapState[1] === recapAns[1] && recapState[2] === recapAns[2]) {
+                    triggerConfetti();
+                    banner.innerText = "Awesome! Both Loop & Condition syntax answers are spot on!";
+                    banner.className = "bg-emerald-50 border-2 border-emerald-300 p-2.5 rounded-2xl text-xs text-emerald-800 font-bold text-center";
+                } else {
+                    banner.innerText = "Check the green highlighted Python syntax above (remember colons ':' and '=='!).";
+                    banner.className = "bg-alphagen-yellowPale border-2 border-alphagen-yellowDark p-2.5 rounded-2xl text-xs text-alphagen-nearBlack font-bold text-center";
+                }
+            }
+        }
+
+        function checkRecap2(qNum, optNum, el) {
+            if (recapState[qNum] !== null) return;
+            recapState[qNum] = optNum;
+            const opts = el.parentElement.querySelectorAll('.quiz-option');
+            opts.forEach((opt, i) => {
+                if (i + 1 === recapAns[qNum]) opt.classList.add('correct');
+                else if (i + 1 === optNum) opt.classList.add('wrong');
+            });
+            playSound(optNum === recapAns[qNum] ? 'correct' : 'wrong');
+
+            if (recapState[3] !== null && recapState[4] !== null) {
+                const banner = document.getElementById('recap2-banner');
+                if (recapState[3] === recapAns[3] && recapState[4] === recapAns[4]) {
+                    triggerConfetti();
+                    banner.innerText = "Brilliant! You nailed Classes/Objects and Multilevel Inheritance!";
+                    banner.className = "bg-emerald-50 border-2 border-emerald-300 p-2.5 rounded-2xl text-xs text-emerald-800 font-bold text-center";
+                } else {
+                    banner.innerText = "ElectricCar -> Car -> Vehicle is a 3-tier chain: Multilevel Inheritance!";
+                    banner.className = "bg-alphagen-yellowPale border-2 border-alphagen-yellowDark p-2.5 rounded-2xl text-xs text-alphagen-nearBlack font-bold text-center";
+                }
+            }
+        }
+
+        /* SLIDE 6 SETUP STEPS WITH COLOR-MATCHED RIGHT EXPLANATION CARD */
+        function highlightSetupStep(step) {
+            playSound('pop');
+            const configs = {
+                1: {
+                    title: "Step 1 Explanation • Import Library",
+                    text: "import turtle loads the Turtle graphics library into your Python file so all drawing commands become available.",
+                    boxClass: "bg-alphagen-purplePale border-2 border-alphagen-purple rounded-2xl p-3.5 transition-colors duration-300",
+                    titleClass: "text-[10px] font-extrabold uppercase tracking-wider text-alphagen-purple"
+                },
+                2: {
+                    title: "Step 2 Explanation • Set Up the Screen",
+                    text: "turtle.Screen() opens the drawing window where you set its width & height (600, 400) and background color.",
+                    boxClass: "bg-alphagen-cyanPale border-2 border-alphagen-cyanDark rounded-2xl p-3.5 transition-colors duration-300",
+                    titleClass: "text-[10px] font-extrabold uppercase tracking-wider text-alphagen-cyanDark"
+                },
+                3: {
+                    title: "Step 3 Explanation • Initialize Pen Variable",
+                    text: "pen = turtle.Turtle() creates your controllable turtle pen object at the center (0, 0) of the canvas.",
+                    boxClass: "bg-emerald-100 border-2 border-emerald-500 rounded-2xl p-3.5 transition-colors duration-300",
+                    titleClass: "text-[10px] font-extrabold uppercase tracking-wider text-emerald-800"
+                },
+                4: {
+                    title: "Step 4 Explanation • Pen Size & Color",
+                    text: "pen.pensize(5) sets the thickness of the line and pen.pencolor('purple') chooses the ink color before moving!",
+                    boxClass: "bg-alphagen-yellowPale border-2 border-alphagen-yellowDark rounded-2xl p-3.5 transition-colors duration-300",
+                    titleClass: "text-[10px] font-extrabold uppercase tracking-wider text-alphagen-nearBlack"
+                }
+            };
+            const cfg = configs[step];
+            const box = document.getElementById('setup-explanation-box');
+            const title = document.getElementById('setup-exp-title');
+            const text = document.getElementById('setup-exp-text');
+            box.className = cfg.boxClass;
+            title.className = cfg.titleClass;
+            title.innerText = cfg.title;
+            text.innerText = cfg.text;
+        }
+
+        /* SLIDE 7 LINE LAB (TOGGLEABLE PENUP/PENDOWN & FORWARD/BACKWARD) */
+        let linePenDown = true;
+        let lineMoveForward = true;
+        let lineTurtleX = 140;
+        let lineColorHex = '#5E48C4';
+        let lineColorName = 'purple';
+        let lineSize = 4;
+        let lineSegments = [];
+
+        function togglePenState() {
+            linePenDown = !linePenDown;
+            playSound('pop');
+            const codeBtn = document.getElementById('code-toggle-pen');
+            const actionBtn = document.getElementById('btn-toggle-pen');
+            const badge = document.getElementById('s7-pen-badge');
+
+            if (linePenDown) {
+                codeBtn.innerText = "pendown()";
+                codeBtn.className = "bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2 py-0.5 rounded underline decoration-dotted cursor-pointer transition";
+                actionBtn.className = "btn-interactive bg-emerald-600 hover:bg-emerald-700 text-white font-mono text-xs py-2 rounded-xl font-bold shadow-sm";
+                badge.innerText = "STATE: PENDOWN (DRAWING)";
+                badge.className = "text-emerald-400 font-bold";
+            } else {
+                codeBtn.innerText = "penup()";
+                codeBtn.className = "bg-amber-500 hover:bg-amber-400 text-alphagen-nearBlack font-bold px-2 py-0.5 rounded underline decoration-dotted cursor-pointer transition";
+                actionBtn.className = "btn-interactive bg-amber-500 hover:bg-amber-600 text-alphagen-nearBlack font-mono text-xs py-2 rounded-xl font-bold shadow-sm";
+                badge.innerText = "STATE: PENUP (NO TRAIL)";
+                badge.className = "text-amber-400 font-bold";
+            }
+            drawLineCanvas();
+        }
+
+        function toggleMoveDir() {
+            lineMoveForward = !lineMoveForward;
+            playSound('pop');
+            const codeDir = document.getElementById('code-toggle-dir');
+            const runBtn = document.getElementById('btn-run-move');
+
+            if (lineMoveForward) {
+                codeDir.innerText = "forward(60)";
+                codeDir.className = "bg-alphagen-purple hover:bg-alphagen-purpleMid text-white font-bold px-2 py-0.5 rounded underline decoration-dotted cursor-pointer transition";
+                runBtn.innerText = "▶ Run forward(60)";
+                runBtn.className = "btn-interactive bg-alphagen-purple hover:bg-alphagen-purpleDark text-white font-mono text-xs py-2 rounded-xl font-bold shadow-sm";
+            } else {
+                codeDir.innerText = "backward(60)";
+                codeDir.className = "bg-alphagen-coral hover:bg-alphagen-coralDark text-white font-bold px-2 py-0.5 rounded underline decoration-dotted cursor-pointer transition";
+                runBtn.innerText = "◀ Run backward(60)";
+                runBtn.className = "btn-interactive bg-alphagen-coral hover:bg-alphagen-coralDark text-white font-mono text-xs py-2 rounded-xl font-bold shadow-sm";
+            }
+        }
+
+        function executeLineMove() {
+            const dx = lineMoveForward ? 60 : -60;
+            playSound('pop');
+            const nextX = Math.max(40, Math.min(600, lineTurtleX + dx));
+            lineSegments.push({
+                x1: lineTurtleX,
+                x2: nextX,
+                down: linePenDown,
+                color: lineColorHex,
+                size: lineSize
+            });
+            lineTurtleX = nextX;
+            drawLineCanvas();
+        }
+
+        function updateLineStyle() {
+            lineSize = parseInt(document.getElementById('s7-size-slider').value);
+            document.getElementById('s7-size-val').innerText = lineSize;
+            drawLineCanvas();
+        }
+
+        function setLineColor(hex, name) {
+            lineColorHex = hex;
+            lineColorName = name;
+            playSound('pop');
+            updateLineStyle();
+        }
+
+        function resetLineCanvas() {
+            playSound('pop');
+            lineTurtleX = 140;
+            lineSegments = [];
+            drawLineCanvas();
+        }
+
+        function drawLineCanvas() {
+            const canvas = document.getElementById('line-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(20, 135);
+            ctx.lineTo(620, 135);
+            ctx.stroke();
+
+            lineSegments.forEach(seg => {
+                ctx.beginPath();
+                ctx.moveTo(seg.x1, 135);
+                ctx.lineTo(seg.x2, 135);
+                if (seg.down) {
+                    ctx.setLineDash([]);
+                    ctx.strokeStyle = seg.color;
+                    ctx.lineWidth = seg.size;
+                } else {
+                    ctx.setLineDash([5, 5]);
+                    ctx.strokeStyle = '#94a3b8';
+                    ctx.lineWidth = 2;
+                }
+                ctx.stroke();
+            });
+            ctx.setLineDash([]);
+            drawTurtleAvatar(ctx, lineTurtleX, 135, 0, lineColorHex);
+        }
+
+        /* CHECKLIST HELPER */
+        function toggleChecklist(prefix, count, id) {
+            playSound('pop');
+            document.getElementById(id).classList.toggle('checked');
+            let allDone = true;
+            for (let i = 1; i <= count; i++) {
+                if (!document.getElementById(`${prefix}${i}`).classList.contains('checked')) {
+                    allDone = false;
+                }
+            }
+            if (allDone) {
+                playSound('correct');
+                triggerConfetti();
+            }
+        }
+
+        /* SLIDE 9 TURNING & TOGGLEABLE ANGLES */
+        let turnX = 320, turnY = 140, turnAngle = 0;
+        let turnPaths = [];
+        const angleOptions = [45, 60, 72, 90, 120];
+        let angleOptIdx = 3; // starts at 90
+        let turnDirMode = 'left'; // 'left' or 'right'
+
+        function cycleTurnAngle() {
+            playSound('pop');
+            angleOptIdx = (angleOptIdx + 1) % angleOptions.length;
+            const val = angleOptions[angleOptIdx];
+            document.getElementById('s9-angle-val').innerText = val;
+            document.getElementById('s9-angle-code-btn').innerText = val;
+            updateTurnExecLabel();
+        }
+
+        function toggleTurnMethod() {
+            playSound('pop');
+            turnDirMode = turnDirMode === 'left' ? 'right' : 'left';
+            document.getElementById('s9-method-btn').innerText = turnDirMode;
+            updateTurnExecLabel();
+        }
+
+        function updateTurnExecLabel() {
+            const val = angleOptions[angleOptIdx];
+            const arrow = turnDirMode === 'left' ? '↺' : '↻';
+            document.getElementById('s9-turn-exec-btn').innerText = `${arrow} Turn ${turnDirMode}(${val})`;
+        }
+
+        function applyTurnFromToggle() {
+            playSound('pop');
+            const delta = angleOptions[angleOptIdx];
+            const dir = turnDirMode === 'left' ? -1 : 1;
+            turnAngle = (turnAngle + dir * delta + 360) % 360;
+            const displayDeg = (360 - turnAngle) % 360;
+            document.getElementById('s9-heading-badge').innerText = `HEADING: ${displayDeg}°`;
+            drawTurnCanvas();
+        }
+
+        function forwardTurnCanvas() {
+            playSound('pop');
+            const rad = (turnAngle * Math.PI) / 180;
+            const dist = 65;
+            const nx = Math.max(30, Math.min(610, turnX + Math.cos(rad) * dist));
+            const ny = Math.max(30, Math.min(245, turnY + Math.sin(rad) * dist));
+            turnPaths.push({ x1: turnX, y1: turnY, x2: nx, y2: ny });
+            turnX = nx;
+            turnY = ny;
+            drawTurnCanvas();
+        }
+
+        function resetTurnCanvas() {
+            playSound('pop');
+            turnX = 320;
+            turnY = 140;
+            turnAngle = 0;
+            turnPaths = [];
+            document.getElementById('s9-heading-badge').innerText = `HEADING: 0° (EAST)`;
+            drawTurnCanvas();
+        }
+
+        function drawTurnCanvas() {
+            const canvas = document.getElementById('turn-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.strokeStyle = '#5E48C4';
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            turnPaths.forEach(p => {
+                ctx.beginPath();
+                ctx.moveTo(p.x1, p.y1);
+                ctx.lineTo(p.x2, p.y2);
+                ctx.stroke();
+            });
+
+            drawTurtleAvatar(ctx, turnX, turnY, turnAngle, '#5E48C4');
+        }
+
+        /* SLIDE 11 GOTO & FILL COLOR */
+        let stampedShapes = [];
+
+        function updateGotoPreview() {
+            const x = document.getElementById('s11-x-slider').value;
+            const y = document.getElementById('s11-y-slider').value;
+            const sel = document.getElementById('s11-color-select');
+            const colName = sel.options[sel.selectedIndex].text;
+
+            document.getElementById('s11-x-val').innerText = x;
+            document.getElementById('s11-y-val').innerText = y;
+            document.getElementById('s11-code-x').innerText = x;
+            document.getElementById('s11-code-y').innerText = y;
+            document.getElementById('s11-code-col').innerText = colName;
+            document.getElementById('s11-pos-badge').innerText = `TURTLE AT (${x}, ${y})`;
+            drawGotoCanvas();
+        }
+
+        function stampShapeAtGoto() {
+            playSound('correct');
+            const x = parseInt(document.getElementById('s11-x-slider').value);
+            const y = parseInt(document.getElementById('s11-y-slider').value);
+            const color = document.getElementById('s11-color-select').value;
+            stampedShapes.push({ x, y, color });
+            drawGotoCanvas();
+        }
+
+        function clearGotoCanvas() {
+            playSound('pop');
+            stampedShapes = [];
+            drawGotoCanvas();
+        }
+
+        function drawGotoCanvas() {
+            const canvas = document.getElementById('goto-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(0, cy); ctx.lineTo(canvas.width, cy);
+            ctx.moveTo(cx, 0); ctx.lineTo(cx, canvas.height);
+            ctx.stroke();
+
+            ctx.fillStyle = '#64748b';
+            ctx.font = 'bold 11px Fira Code';
+            ctx.fillText('(0, 0)', cx + 6, cy - 6);
+            ctx.fillText('-X (Left)', 12, cy - 6);
+            ctx.fillText('+X (Right)', canvas.width - 80, cy - 6);
+
+            stampedShapes.forEach(s => {
+                const sx = cx + s.x - 32;
+                const sy = cy - s.y - 32;
+                ctx.fillStyle = s.color;
+                ctx.strokeStyle = '#1A1A1A';
+                ctx.lineWidth = 2.5;
+                ctx.fillRect(sx, sy, 64, 64);
+                ctx.strokeRect(sx, sy, 64, 64);
+            });
+
+            const curX = cx + parseInt(document.getElementById('s11-x-slider').value);
+            const curY = cy - parseInt(document.getElementById('s11-y-slider').value);
+            drawTurtleAvatar(ctx, curX, curY, 0, '#5E48C4');
+        }
+
+        /* SLIDE 12 POLYGON LOOPS (TRIANGLE, SQUARE, HEXAGON + PENTAGON ANGLE QUESTION) */
+        let currentPolySides = 4;
+
+        function setPolygonSides(sides) {
+            currentPolySides = sides;
+            playSound('pop');
+            [3, 4, 6].forEach(s => {
+                const btn = document.getElementById(`poly-btn-${s}`);
+                if (btn) {
+                    btn.className = s === sides
+                        ? "poly-btn btn-interactive bg-alphagen-purple text-white px-3 py-1 rounded-lg text-xs font-bold"
+                        : "poly-btn btn-interactive bg-white border border-alphagen-purplePale px-3 py-1 rounded-lg text-xs font-bold";
+                }
+            });
+
+            const angle = 360 / sides;
+            const stepLen = sides === 6 ? 70 : 95;
+            const names = { 3: 'TRIANGLE', 4: 'SQUARE', 6: 'HEXAGON' };
+
+            document.getElementById('s12-formula').innerText = `360° ÷ ${sides} sides = ${angle}° turn`;
+            document.getElementById('s12-loop-explain').innerText = `The loop runs ${sides} times, turning ${angle}° each time!`;
+            document.getElementById('s12-code-sides').innerText = sides;
+            document.getElementById('s12-code-len').innerText = stepLen;
+            document.getElementById('s12-code-angle').innerText = angle;
+            document.getElementById('s12-shape-name').innerText = `SHAPE: ${names[sides]}`;
+
+            const canvas = document.getElementById('poly-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const radius = 85;
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2 + 5;
+
+            ctx.fillStyle = '#EAE7FE';
+            ctx.strokeStyle = '#5E48C4';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            for (let i = 0; i <= sides; i++) {
+                const theta = (i * 2 * Math.PI) / sides - Math.PI / 2;
+                const px = cx + radius * Math.cos(theta);
+                const py = cy + radius * Math.sin(theta);
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            drawTurtleAvatar(ctx, cx, cy - radius, 0, '#5E48C4');
+        }
+
+        function checkPentagonAngle(deg, btn) {
+            document.querySelectorAll('.pent-opt').forEach(b => b.classList.remove('correct', 'wrong'));
+            const status = document.getElementById('pentagon-q-status');
+            if (deg === 72) {
+                btn.classList.add('correct');
+                status.innerText = "Correct! 360 ÷ 5 = 72°";
+                status.className = "text-[11px] font-extrabold text-emerald-700";
+                playSound('correct');
+                triggerConfetti();
+            } else {
+                btn.classList.add('wrong');
+                status.innerText = "Try again: 360 ÷ 5";
+                status.className = "text-[11px] font-extrabold text-red-600";
+                playSound('wrong');
+            }
+        }
+
+        /* SLIDE 14 NESTED LOOPS: SINGLE COLOR TRIANGLES, SLOW ANIMATED HIGHLIGHT, OUTER 4-10 */
+        let nestedSimTimer = null;
+
+        function resetAndDrawNestedInstant() {
+            if (nestedSimTimer) {
+                clearTimeout(nestedSimTimer);
+                nestedSimTimer = null;
+            }
+            clearNestedHighlights();
+            const count = parseInt(document.getElementById('s14-slider').value);
+            const rotAngle = Math.round((360 / count) * 10) / 10;
+
+            document.getElementById('s14-outer-val').innerText = count;
+            document.getElementById('s14-count-label').innerText = count;
+            document.getElementById('s14-rot-val').innerText = rotAngle;
+            document.getElementById('s14-mult-note').innerText = `${count} × ${rotAngle}° = 360°`;
+            document.getElementById('s14-badge').innerText = `${count} TRIANGLES × ${rotAngle}° = 360°`;
+
+            renderNestedTriangles(count, 3);
+        }
+
+        function clearNestedHighlights() {
+            ['s14-code-outer', 's14-code-inner', 's14-code-turn'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.backgroundColor = 'transparent';
+            });
+        }
+
+        function renderNestedTriangles(completedOuterCount, activeTriangleSides) {
+            const canvas = document.getElementById('nested-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const totalOuter = parseInt(document.getElementById('s14-slider').value);
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+            const sideLen = 105;
+            const innerTurn = (120 * Math.PI) / 180;
+
+            // Single consistent stroke color (#5E48C4) matching the code
+            ctx.strokeStyle = '#5E48C4';
+            ctx.lineWidth = 2.5;
+
+            for (let o = 0; o < completedOuterCount; o++) {
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate((o * 360 / totalOuter) * (Math.PI / 180));
+                let x = 0, y = 0, heading = 0;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                for (let i = 0; i < 3; i++) {
+                    x += Math.cos(heading) * sideLen;
+                    y += Math.sin(heading) * sideLen;
+                    ctx.lineTo(x, y);
+                    heading += innerTurn;
+                }
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // Draw partial active triangle if animating slowly
+            if (activeTriangleSides > 0 && completedOuterCount < totalOuter) {
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate((completedOuterCount * 360 / totalOuter) * (Math.PI / 180));
+                ctx.strokeStyle = '#E6B84A';
+                ctx.lineWidth = 3.5;
+                let x = 0, y = 0, heading = 0;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                for (let i = 0; i < activeTriangleSides; i++) {
+                    x += Math.cos(heading) * sideLen;
+                    y += Math.sin(heading) * sideLen;
+                    ctx.lineTo(x, y);
+                    heading += innerTurn;
+                }
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        function startSlowNestedSim() {
+            if (nestedSimTimer) clearTimeout(nestedSimTimer);
+            const totalOuter = parseInt(document.getElementById('s14-slider').value);
+            let outerIdx = 0;
+            let innerSide = 0;
+
+            function stepSlow() {
+                if (outerIdx >= totalOuter) {
+                    clearNestedHighlights();
+                    renderNestedTriangles(totalOuter, 0);
+                    playSound('correct');
+                    return;
+                }
+
+                if (innerSide < 3) {
+                    // Inner loop active -> highlight inner block
+                    clearNestedHighlights();
+                    document.getElementById('s14-code-inner').style.backgroundColor = 'rgba(255, 208, 113, 0.28)';
+                    innerSide++;
+                    renderNestedTriangles(outerIdx, innerSide);
+                    playSound('pop');
+                    nestedSimTimer = setTimeout(stepSlow, 420);
+                } else {
+                    // Outer rotation active -> highlight outer rotation block
+                    clearNestedHighlights();
+                    document.getElementById('s14-code-outer').style.backgroundColor = 'rgba(89, 228, 251, 0.22)';
+                    document.getElementById('s14-code-turn').style.backgroundColor = 'rgba(52, 211, 153, 0.28)';
+                    outerIdx++;
+                    innerSide = 0;
+                    renderNestedTriangles(outerIdx, 0);
+                    nestedSimTimer = setTimeout(stepSlow, 520);
+                }
+            }
+
+            renderNestedTriangles(0, 0);
+            stepSlow();
+        }
+
+        function checkHexagonNestedInput() {
+            const innerVal = parseInt(document.getElementById('hex-inner-input').value);
+            const outerVal = parseInt(document.getElementById('hex-outer-input').value);
+            const fb = document.getElementById('hex-nested-feedback');
+
+            if (innerVal === 6 && outerVal > 4) {
+                const rot = Math.round((360 / outerVal) * 10) / 10;
+                fb.innerText = `Spot on! Inner range = 6 (Hexagon), and any outer value > 4 (like ${outerVal} with pen.right(${rot})) creates a concentric pattern!`;
+                fb.className = "text-[11px] font-bold text-emerald-700";
+                playSound('correct');
+                triggerConfetti();
+            } else {
+                fb.innerText = "Hint: A Hexagon has 6 sides (inner range = 6), and any outer range value greater than 4 helps create a concentric shape!";
+                fb.className = "text-[11px] font-bold text-alphagen-coralDark";
+                playSound('wrong');
+            }
+        }
+
+        /* SLIDE 15 RANDOM RGB CONCENTRIC GENERATOR */
+        function generateRandomConcentric() {
+            playSound('pop');
+            const canvas = document.getElementById('random-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+            const repeats = 12;
+            let lastR = 255, lastG = 208, lastB = 113;
+
+            for (let o = 0; o < repeats; o++) {
+                lastR = Math.floor(Math.random() * 256);
+                lastG = Math.floor(Math.random() * 256);
+                lastB = Math.floor(Math.random() * 256);
+                const rgbStr = `rgb(${lastR}, ${lastG}, ${lastB})`;
+
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate((o * 360 / repeats) * (Math.PI / 180));
+                ctx.strokeStyle = rgbStr;
+                ctx.fillStyle = `rgba(${lastR}, ${lastG}, ${lastB}, 0.16)`;
+                ctx.lineWidth = 3;
+
+                // Draw rotated square with random RGB shade
+                ctx.beginPath();
+                ctx.rect(0, 0, 82, 82);
+                ctx.fill();
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            document.getElementById('s15-r').innerText = lastR;
+            document.getElementById('s15-g').innerText = lastG;
+            document.getElementById('s15-b').innerText = lastB;
+            document.getElementById('s15-rgb-badge').innerText = `LATEST RGB(${lastR}, ${lastG}, ${lastB})`;
+        }
+
+        /* SLIDE 16 FINAL QUIZ (PEN UP, PEN DOWN, HOW TO FILL A SHAPE) */
+        const finalAns = { 1: 2, 2: 1, 3: 2 };
+        const finalState = { 1: null, 2: null, 3: null };
+
+        function checkFinalQuiz(qNum, optNum, el) {
+            if (finalState[qNum] !== null) return;
+            finalState[qNum] = optNum;
+
+            const opts = el.parentElement.querySelectorAll('.quiz-option');
+            opts.forEach((opt, i) => {
+                if (i + 1 === finalAns[qNum]) opt.classList.add('correct');
+                else if (i + 1 === optNum) opt.classList.add('wrong');
+            });
+
+            playSound(optNum === finalAns[qNum] ? 'correct' : 'wrong');
+
+            if (finalState[1] !== null && finalState[2] !== null && finalState[3] !== null) {
+                const allCorrect = finalState[1] === finalAns[1] && finalState[2] === finalAns[2] && finalState[3] === finalAns[3];
+                const banner = document.getElementById('final-quiz-banner');
+                if (allCorrect) {
+                    triggerConfetti();
+                    setTimeout(triggerConfetti, 350);
+                    banner.innerText = "CONGRATULATIONS! You mastered Python Turtle and completed the course!";
+                    banner.className = "bg-emerald-50 border-2 border-emerald-300 p-2.5 rounded-2xl text-xs text-emerald-800 font-bold text-center";
+                } else {
+                    banner.innerText = "Great job! Review the green highlighted answers above (fillcolor -> begin_fill -> draw -> end_fill)!";
+                    banner.className = "bg-alphagen-yellowPale border-2 border-alphagen-yellowDark p-2.5 rounded-2xl text-xs text-alphagen-nearBlack font-bold text-center";
+                }
+            }
+        }
+
+        /* Keyboard Navigation */
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+            if (e.key === 'ArrowRight' || e.key === 'Space') nextSlide();
+            if (e.key === 'ArrowLeft') prevSlide();
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initHeaderDots();
+            updateSlideDisplay();
+        });
+    </script>
+</body>
+</html>
